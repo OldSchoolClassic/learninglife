@@ -1,0 +1,54 @@
+# ============================================================
+# Pillars of Peace Primary Partners — Jekyll / GitHub Pages
+# ============================================================
+
+title: "Pillars of Peace Primary Partners"
+description: "PA homeschool evaluations, IEP support, graduation guidance, and curriculum resources — with Alona Cortes, certified teacher and homeschooling mom."
+url: "https://pillarsofpeacepartners.com"   # update to your GitHub Pages or custom domain URL
+baseurl: ""                                   # leave blank unless deploying to a subdirectory
+
+# Author
+author:
+  name: Alona Cortes
+  email: alonacortes@gmail.com
+
+# Permalinks — clean URLs without .html extension
+permalink: /:name/
+
+# SEO plugin (add to Gemfile: gem 'jekyll-seo-tag')
+plugins:
+  - jekyll-seo-tag
+  - jekyll-sitemap
+  - jekyll-feed
+
+# Sitemap
+sitemap:
+  filename: sitemap.xml
+
+# Feed
+feed:
+  path: feed.xml
+
+# Exclude from build
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - README.md
+  - "*.zip"
+  - "*.txt"
+  - node_modules/
+  - .DS_Store
+
+# Collections (for future blog posts / prayer letters)
+# collections:
+#   posts:
+#     output: true
+#     permalink: /blog/:year/:month/:day/:title/
+
+# Defaults
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
