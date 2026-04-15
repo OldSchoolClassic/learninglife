@@ -1,131 +1,157 @@
 /* ============================================================
-   Learning Life — main.js  v2
-   Fixes: hamburger animation, nav scroll offset, mobile close,
-          body scroll lock, escape key, focus trap in mobile nav
+   Learning Life — main.js  Luxury Polish v2
+   Behaviors:
+   - Premium transparent→frosted-scrolled nav
+   - Immersive mobile nav with real focus trap, entrance animation
+   - Scroll reveal: 860ms, cubic-bezier(0.16,1,0.3,1), staggered
+   - Parallax: factor 0.06, rAF-throttled, mobile+reduced-motion off
+   - Smooth scroll with nav offset
+   - FAQ accordion
+   - Video facades (click-to-load)
+   - All motion respects prefers-reduced-motion
    ============================================================ */
-document.addEventListener('DOMContentLoaded', function () {
+(function () {
+  'use strict';
 
-  /* ── Sticky Nav: transparent → scrolled ── */
-  const nav = document.querySelector('.site-nav');
+  var PRM = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+  /* ── Utility ─────────────────────────────────────────────── */
+  function qs(sel, ctx) { return (ctx || document).querySelector(sel); }
+  function qsa(sel, ctx) { return Array.from((ctx || document).querySelectorAll(sel)); }
+
+  /* ── 1. Sticky nav: transparent → premium frosted ────────── */
+  var nav = qs('.site-nav');
   if (nav) {
     nav.classList.add('transparent');
+    var lastScroll = 0;
     window.addEventListener('scroll', function () {
-      const scrolled = window.scrollY > 60;
-      nav.classList.toggle('scrolled', scrolled);
-      nav.classList.toggle('transparent', !scrolled);
+      var y = window.scrollY;
+      nav.classList.toggle('scrolled', y > 60);
+      nav.classList.toggle('transparent', y <= 60);
+      lastScroll = y;
     }, { passive: true });
   }
 
-  /* ── Mobile Nav ── */
-  const hamburger  = document.querySelector('.nav-hamburger');
-  const mobileNav  = document.querySelector('.mobile-nav');
-  const closeBtn   = document.querySelector('.mobile-nav-close');
+  /* ── 2. Mobile nav with real focus trap ──────────────────── */
+  var hamburger = qs('.nav-hamburger');
+  var mobileNav = qs('.mobile-nav');
+  var closeBtn  = qs('.mobile-nav-close');
 
-  function openMobileNav() {
+  function focusable() {
+    if (!mobileNav) return [];
+    return qsa('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])', mobileNav)
+      .filter(function (el) { return el.offsetParent !== null; });
+  }
+
+  function openNav() {
     if (!mobileNav) return;
     mobileNav.classList.add('open');
     document.body.style.overflow = 'hidden';
     hamburger && hamburger.setAttribute('aria-expanded', 'true');
-    // Animate hamburger to X
-    if (hamburger) {
-      const spans = hamburger.querySelectorAll('span');
-      if (spans[0]) spans[0].style.cssText = 'transform:translateY(7px) rotate(45deg)';
-      if (spans[1]) spans[1].style.cssText = 'opacity:0; transform:scaleX(0)';
-      if (spans[2]) spans[2].style.cssText = 'transform:translateY(-7px) rotate(-45deg)';
-    }
-    // Focus first link
-    const first = mobileNav.querySelector('a');
-    if (first) setTimeout(() => first.focus(), 50);
+    // Delay focus so transition is visible first
+    setTimeout(function () { closeBtn && closeBtn.focus(); }, 80);
   }
 
-  function closeMobileNav() {
+  function closeNav() {
     if (!mobileNav) return;
     mobileNav.classList.remove('open');
     document.body.style.overflow = '';
     hamburger && hamburger.setAttribute('aria-expanded', 'false');
-    // Reset hamburger
-    if (hamburger) {
-      hamburger.querySelectorAll('span').forEach(s => s.style.cssText = '');
-    }
     hamburger && hamburger.focus();
   }
 
-  if (hamburger) hamburger.addEventListener('click', openMobileNav);
-  if (closeBtn)  closeBtn.addEventListener('click', closeMobileNav);
-
-  // Close on any nav link click
-  mobileNav && mobileNav.querySelectorAll('a').forEach(a =>
-    a.addEventListener('click', closeMobileNav)
-  );
-
-  // Escape key closes nav
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && mobileNav && mobileNav.classList.contains('open')) {
-      closeMobileNav();
+  // Focus trap
+  mobileNav && mobileNav.addEventListener('keydown', function (e) {
+    if (!mobileNav.classList.contains('open')) return;
+    var items = focusable();
+    if (!items.length) return;
+    var first = items[0], last = items[items.length - 1];
+    if (e.key === 'Tab') {
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault(); first.focus();
+      }
     }
   });
 
-  // Click outside nav closes it
-  mobileNav && mobileNav.addEventListener('click', function (e) {
-    if (e.target === mobileNav) closeMobileNav();
+  hamburger && hamburger.addEventListener('click', openNav);
+  closeBtn  && closeBtn.addEventListener('click', closeNav);
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && mobileNav && mobileNav.classList.contains('open')) closeNav();
+  });
+  mobileNav && qsa('a', mobileNav).forEach(function (a) {
+    a.addEventListener('click', closeNav);
   });
 
-  /* ── Scroll Reveal — staggered delays ── */
-  const reveals = document.querySelectorAll('.reveal');
+  /* ── 3. Scroll reveal ────────────────────────────────────── */
+  var reveals = qsa('.reveal');
   if (reveals.length) {
-    const io = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          setTimeout(function () {
-            entry.target.classList.add('visible');
-          }, parseInt(entry.target.dataset.delay || 0, 10));
-          io.unobserve(entry.target);
-        }
+    if (PRM) {
+      reveals.forEach(function (el) { el.classList.add('visible'); });
+    } else {
+      var revIO = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            var delay = Math.min(parseInt(entry.target.dataset.delay || '0', 10), 560);
+            setTimeout(function () { entry.target.classList.add('visible'); }, delay);
+            revIO.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.08, rootMargin: '0px 0px -28px 0px' });
+
+      reveals.forEach(function (el, i) {
+        if (!el.dataset.delay) el.dataset.delay = String(Math.min(i * 120, 560));
+        revIO.observe(el);
       });
-    }, { threshold: 0.08 });
-    reveals.forEach(function (el, i) {
-      if (!el.dataset.delay) el.dataset.delay = String(Math.min(i * 75, 450));
-      io.observe(el);
-    });
+    }
   }
 
-  /* ── Hero Parallax ── */
-  const heroBg = document.querySelector('.hero-bg');
-  if (heroBg) {
+  /* ── 4. Parallax ─────────────────────────────────────────── */
+  var heroBg = qs('.hero-bg');
+  if (heroBg && !PRM && !isMobile) {
+    var ticking = false;
     window.addEventListener('scroll', function () {
-      heroBg.style.transform = 'scale(1.05) translateY(' + window.scrollY * 0.18 + 'px)';
+      if (!ticking) {
+        requestAnimationFrame(function () {
+          // 0.06 factor per spec, clamped at 40px for very long pages
+          var offset = Math.min(window.scrollY * 0.06, 40);
+          heroBg.style.transform = 'scale(1.04) translateY(' + offset + 'px)';
+          ticking = false;
+        });
+        ticking = true;
+      }
     }, { passive: true });
   }
 
-  /* ── Smooth Scroll — offset for fixed nav ── */
-  document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
-    anchor.addEventListener('click', function (e) {
-      const id = this.getAttribute('href');
-      if (id === '#') return;
-      const target = document.querySelector(id);
+  /* ── 5. Smooth scroll with nav offset ───────────────────── */
+  qsa('a[href^="#"]').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      var id = this.getAttribute('href');
+      if (!id || id === '#') return;
+      var target = document.querySelector(id);
       if (target) {
         e.preventDefault();
-        const navH = nav ? nav.offsetHeight : 0;
-        const top = target.getBoundingClientRect().top + window.scrollY - navH - 20;
-        window.scrollTo({ top, behavior: 'smooth' });
+        var navH = nav ? nav.offsetHeight : 0;
+        var top = target.getBoundingClientRect().top + window.scrollY - navH - 20;
+        window.scrollTo({ top: top, behavior: PRM ? 'auto' : 'smooth' });
       }
     });
   });
 
-  /* ── FAQ Accordion ── */
-  document.querySelectorAll('.faq-btn').forEach(function (btn) {
+  /* ── 6. FAQ accordion ────────────────────────────────────── */
+  qsa('.faq-btn').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      const answer = this.nextElementSibling;
-      const isOpen = this.getAttribute('aria-expanded') === 'true';
-
+      var answer = this.nextElementSibling;
+      var isOpen = this.getAttribute('aria-expanded') === 'true';
       // Close all
-      document.querySelectorAll('.faq-btn').forEach(function (b) {
+      qsa('.faq-btn').forEach(function (b) {
         b.setAttribute('aria-expanded', 'false');
-        const a = b.nextElementSibling;
+        var a = b.nextElementSibling;
         if (a) a.classList.remove('open');
       });
-
-      // Toggle this one
+      // Open this one
       if (!isOpen) {
         this.setAttribute('aria-expanded', 'true');
         if (answer) answer.classList.add('open');
@@ -133,24 +159,25 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  /* ── Video Facades ── */
-  document.querySelectorAll('.video-facade').forEach(function (facade) {
-    function loadVideo() {
-      const videoId = facade.dataset.videoid;
-      if (!videoId) return;
-      const iframe = document.createElement('iframe');
-      iframe.src = 'https://www.youtube.com/embed/' + videoId + '?autoplay=1&rel=0';
+  /* ── 7. Video facades ────────────────────────────────────── */
+  qsa('.video-facade').forEach(function (facade) {
+    function load() {
+      var id = facade.dataset.videoid;
+      if (!id) return;
+      var iframe = document.createElement('iframe');
+      iframe.src = 'https://www.youtube.com/embed/' + id + '?autoplay=1&rel=0';
       iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
       iframe.allowFullscreen = true;
       iframe.title = facade.getAttribute('aria-label') || 'Video';
+      iframe.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;border:0;';
       facade.innerHTML = '';
       facade.appendChild(iframe);
       facade.classList.add('playing');
     }
-    facade.addEventListener('click', loadVideo);
+    facade.addEventListener('click', load);
     facade.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); loadVideo(); }
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); load(); }
     });
   });
 
-});
+}());
