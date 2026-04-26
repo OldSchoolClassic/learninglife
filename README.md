@@ -1,4 +1,4 @@
-# Pillars of Peace Primary Partners
+# Learning Life
 
 Static Jekyll site for Alona Cortes — PA homeschool evaluator.
 
