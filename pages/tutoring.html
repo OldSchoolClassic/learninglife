@@ -21,7 +21,7 @@ permalink: /tutoring/
   <a class="skip-link" href="#main-content">Skip to main content</a>
   <nav class="site-nav transparent" role="navigation" aria-label="Main navigation">
     <div class="nav-inner">
-      <a href="/" class="nav-logo" aria-label="Learning Life — Home">
+      <a href="/" class="nav-logo" aria-label="Learning Life, Home">
         <div class="nav-logo-mark" aria-hidden="true">LL</div>
         <div class="nav-logo-text">
           <span class="nav-logo-name">Learning Life</span>
@@ -30,11 +30,23 @@ permalink: /tutoring/
       </a>
       <ul class="nav-links" role="list">
         <li><a href="/about/">About Alona</a></li>
-        <li><a href="/evaluations/">Evaluations</a></li>
-        <li><a href="/iep/">IEP Students</a></li>
-        <li><a href="/graduation/">Graduation</a></li>
+        <li class="nav-dropdown">
+          <button class="nav-dropdown-toggle" type="button" aria-expanded="false" aria-controls="services-menu">
+            Services
+            <span class="nav-caret" aria-hidden="true"></span>
+          </button>
+          <ul class="nav-dropdown-menu" id="services-menu" role="list">
+            <li><a href="/evaluations/">Evaluations</a></li>
+            <li><a href="/iep/">Students with IEPs</a></li>
+            <li><a href="/tutoring/">Tutoring</a></li>
+            <li><a href="/graduation/">Graduation &amp; Diplomas</a></li>
+            <li><a href="/start-homeschooling/">Starting Homeschooling</a></li>
+            <li><a href="/payment/">Payment Portal</a></li>
+          </ul>
+        </li>
         <li><a href="/resources/">Resources</a></li>
         <li><a href="/faqs/">FAQs</a></li>
+        <li><a href="/contact/">Contact</a></li>
       </ul>
       <a href="/schedule/" class="btn btn-gold nav-cta">Schedule Now</a>
       <button class="nav-hamburger" aria-label="Open navigation menu" aria-expanded="false" aria-controls="mobile-nav">
@@ -45,13 +57,23 @@ permalink: /tutoring/
   <div class="mobile-nav" id="mobile-nav" role="dialog" aria-modal="true" aria-label="Navigation">
     <button class="mobile-nav-close" aria-label="Close navigation menu">✕</button>
     <a href="/about/">About Alona</a>
-    <a href="/evaluations/">Evaluations</a>
-    <a href="/iep/">IEP Students</a>
-    <a href="/graduation/">Graduation</a>
+    <div class="mobile-nav-group">
+      <button class="mobile-nav-group-toggle" type="button" aria-expanded="false" aria-controls="mobile-services-menu">
+        Services
+        <span class="mobile-nav-group-caret" aria-hidden="true"></span>
+      </button>
+      <div class="mobile-nav-group-panel" id="mobile-services-menu">
+        <a href="/evaluations/" class="mobile-nav-sublink">Evaluations</a>
+        <a href="/iep/" class="mobile-nav-sublink">Students with IEPs</a>
+        <a href="/tutoring/" class="mobile-nav-sublink">Tutoring</a>
+        <a href="/graduation/" class="mobile-nav-sublink">Graduation &amp; Diplomas</a>
+        <a href="/start-homeschooling/" class="mobile-nav-sublink">Starting Homeschooling</a>
+        <a href="/payment/" class="mobile-nav-sublink">Payment Portal</a>
+      </div>
+    </div>
     <a href="/resources/">Resources</a>
     <a href="/faqs/">FAQs</a>
     <a href="/contact/">Contact</a>
-    <a href="/payment/">Payment Portal</a>
     <a href="/schedule/" class="mobile-nav-schedule">Schedule Now →</a>
     <p class="mobile-nav-location">Pittsburgh, PA · All PA Counties</p>
   </div>
