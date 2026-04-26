@@ -1,15 +1,19 @@
+
+## `_config.yml`
+
+```yml
 # ============================================================
 # Learning Life, Jekyll / GitHub Pages
 # ============================================================
 
 title: "Learning Life"
-description: "PA homeschool evaluations, IEP support, graduation guidance, and curriculum resources, with Alona Cortes, certified teacher and homeschooling mom."
+description: "PA homeschool evaluations, IEP support, graduation guidance, tutoring, and homeschool resources with Alona Cortes."
 url: "https://learninglife.us"
 baseurl: ""
 
 author:
-  name: Alona Cortes
-  email: alonacortes@gmail.com
+  name: "Alona Cortes"
+  email: "alonacortes@gmail.com"
 
 permalink: /:name/
 
