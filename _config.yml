@@ -1,10 +1,10 @@
 # ============================================================
-# Pillars of Peace Primary Partners — Jekyll / GitHub Pages
+# Learning Life — Jekyll / GitHub Pages
 # ============================================================
 
-title: "Pillars of Peace Primary Partners"
+title: "Learning Life"
 description: "PA homeschool evaluations, IEP support, graduation guidance, and curriculum resources — with Alona Cortes, certified teacher and homeschooling mom."
-url: "https://pillarsofpeacepartners.com"   # update to your GitHub Pages or custom domain URL
+url: "https://learninglife.us"   # update to your GitHub Pages or custom domain URL
 baseurl: ""                                   # leave blank unless deploying to a subdirectory
 
 # Author
