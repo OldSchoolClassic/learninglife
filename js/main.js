@@ -1,154 +1,280 @@
 /* ============================================================
-   Learning Life — main.js  Luxury Polish v3
+   Learning Life — main.js
    Behaviors:
-   - Premium transparent→frosted-scrolled nav
-   - Immersive mobile nav with real focus trap
-   - Scroll reveal: 860ms, cubic-bezier(0.16,1,0.3,1), staggered
-   - Parallax: factor 0.06, rAF-throttled, mobile+reduced-motion off
+   - Premium transparent → frosted scrolled nav
+   - Mobile nav with focus trap, click-outside close, and focus return
+   - Scroll reveal with calm staggered timing
+   - Parallax for homepage hero only, disabled on mobile and reduced motion
    - Smooth scroll with nav offset
-   - All motion respects prefers-reduced-motion
+   - FAQ accordion
+   - Payment portal copy buttons
+   - Optional video facades
    ============================================================ */
 (function () {
   'use strict';
 
-  var reduceMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   var mobileQuery = window.matchMedia('(max-width: 768px)');
-  var PRM = reduceMotionQuery.matches;
+  var reducedMotion = prefersReducedMotion.matches;
   var isMobile = mobileQuery.matches;
-  var savedScrollY = 0;
 
   function qs(sel, ctx) { return (ctx || document).querySelector(sel); }
-  function qsa(sel, ctx) { return Array.from((ctx || document).querySelectorAll(sel)); }
+  function qsa(sel, ctx) { return Array.prototype.slice.call((ctx || document).querySelectorAll(sel)); }
 
-  function handlePreferenceChange() {
-    PRM = reduceMotionQuery.matches;
-    isMobile = mobileQuery.matches;
+  if (typeof prefersReducedMotion.addEventListener === 'function') {
+    prefersReducedMotion.addEventListener('change', function (e) { reducedMotion = e.matches; });
+  } else if (typeof prefersReducedMotion.addListener === 'function') {
+    prefersReducedMotion.addListener(function (e) { reducedMotion = e.matches; });
   }
 
-  if (typeof reduceMotionQuery.addEventListener === 'function') {
-    reduceMotionQuery.addEventListener('change', handlePreferenceChange);
-    mobileQuery.addEventListener('change', handlePreferenceChange);
-  } else if (typeof reduceMotionQuery.addListener === 'function') {
-    reduceMotionQuery.addListener(handlePreferenceChange);
-    mobileQuery.addListener(handlePreferenceChange);
+  if (typeof mobileQuery.addEventListener === 'function') {
+    mobileQuery.addEventListener('change', function (e) { isMobile = e.matches; });
+  } else if (typeof mobileQuery.addListener === 'function') {
+    mobileQuery.addListener(function (e) { isMobile = e.matches; });
   }
 
+  /* ── Sticky nav ─────────────────────────────────────────── */
   var nav = qs('.site-nav');
+  function updateNavState() {
+    if (!nav) return;
+    var scrolled = window.scrollY > 60;
+    nav.classList.toggle('scrolled', scrolled);
+    nav.classList.toggle('transparent', !scrolled);
+  }
   if (nav) {
-    nav.classList.add('transparent');
-    window.addEventListener('scroll', function () {
-      var y = window.scrollY;
-      nav.classList.toggle('scrolled', y > 60);
-      nav.classList.toggle('transparent', y <= 60);
-    }, { passive: true });
+    updateNavState();
+    window.addEventListener('scroll', updateNavState, { passive: true });
   }
 
+  /* ── Mobile nav ─────────────────────────────────────────── */
   var hamburger = qs('.nav-hamburger');
   var mobileNav = qs('.mobile-nav');
-  var closeBtn  = qs('.mobile-nav-close');
+  var closeBtn = qs('.mobile-nav-close');
+  var previousFocus = null;
 
-  function focusable() {
-    if (!mobileNav) return [];
-    return qsa('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])', mobileNav)
+  function getFocusableWithin(container) {
+    if (!container) return [];
+    return qsa('a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])', container)
       .filter(function (el) { return el.offsetParent !== null; });
   }
 
   function openNav() {
     if (!mobileNav) return;
-    savedScrollY = window.scrollY;
+    previousFocus = document.activeElement;
     mobileNav.classList.add('open');
     document.body.style.overflow = 'hidden';
-    hamburger && hamburger.setAttribute('aria-expanded', 'true');
-    setTimeout(function () { closeBtn && closeBtn.focus(); }, 80);
+    if (hamburger) hamburger.setAttribute('aria-expanded', 'true');
+    window.setTimeout(function () {
+      if (closeBtn) closeBtn.focus();
+    }, 90);
   }
 
   function closeNav() {
     if (!mobileNav) return;
     mobileNav.classList.remove('open');
     document.body.style.overflow = '';
-    hamburger && hamburger.setAttribute('aria-expanded', 'false');
-    hamburger && hamburger.focus();
-    if (window.scrollY !== savedScrollY) {
-      window.scrollTo({ top: savedScrollY, behavior: 'auto' });
+    if (hamburger) hamburger.setAttribute('aria-expanded', 'false');
+    if (previousFocus && typeof previousFocus.focus === 'function') {
+      previousFocus.focus();
+    } else if (hamburger) {
+      hamburger.focus();
     }
   }
 
-  mobileNav && mobileNav.addEventListener('keydown', function (e) {
-    if (!mobileNav.classList.contains('open')) return;
-    var items = focusable();
-    if (!items.length) return;
-    var first = items[0], last = items[items.length - 1];
-    if (e.key === 'Tab') {
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault(); last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault(); first.focus();
+  if (hamburger) hamburger.addEventListener('click', openNav);
+  if (closeBtn) closeBtn.addEventListener('click', closeNav);
+
+  if (mobileNav) {
+    mobileNav.addEventListener('click', function (event) {
+      if (event.target === mobileNav) closeNav();
+    });
+
+    mobileNav.addEventListener('keydown', function (event) {
+      if (!mobileNav.classList.contains('open')) return;
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeNav();
+        return;
       }
+
+      if (event.key !== 'Tab') return;
+      var focusable = getFocusableWithin(mobileNav);
+      if (!focusable.length) return;
+      var first = focusable[0];
+      var last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    });
+
+    qsa('a', mobileNav).forEach(function (link) {
+      link.addEventListener('click', closeNav);
+    });
+  }
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape' && mobileNav && mobileNav.classList.contains('open')) {
+      closeNav();
     }
   });
 
-  hamburger && hamburger.addEventListener('click', openNav);
-  closeBtn  && closeBtn.addEventListener('click', closeNav);
-  mobileNav && mobileNav.addEventListener('click', function (e) {
-    if (e.target === mobileNav) closeNav();
-  });
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && mobileNav && mobileNav.classList.contains('open')) closeNav();
-  });
-  mobileNav && qsa('a', mobileNav).forEach(function (a) {
-    a.addEventListener('click', closeNav);
-  });
-
-  var reveals = qsa('.reveal');
-  if (reveals.length) {
-    if (PRM) {
-      reveals.forEach(function (el) { el.classList.add('visible'); });
+  /* ── Scroll reveal ──────────────────────────────────────── */
+  var revealItems = qsa('.reveal');
+  if (revealItems.length) {
+    if (reducedMotion) {
+      revealItems.forEach(function (item) { item.classList.add('visible'); });
     } else {
-      var revIO = new IntersectionObserver(function (entries) {
+      var revealObserver = new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {
-          if (entry.isIntersecting) {
-            var delay = Math.min(parseInt(entry.target.dataset.delay || '0', 10), 560);
-            setTimeout(function () { entry.target.classList.add('visible'); }, delay);
-            revIO.unobserve(entry.target);
-          }
+          if (!entry.isIntersecting) return;
+          var delay = Math.min(parseInt(entry.target.dataset.delay || '0', 10), 560);
+          window.setTimeout(function () {
+            entry.target.classList.add('visible');
+          }, delay);
+          revealObserver.unobserve(entry.target);
         });
       }, { threshold: 0.08, rootMargin: '0px 0px -28px 0px' });
 
-      reveals.forEach(function (el, i) {
-        if (!el.dataset.delay) el.dataset.delay = String(Math.min(i * 120, 560));
-        revIO.observe(el);
+      revealItems.forEach(function (item, index) {
+        if (!item.dataset.delay) item.dataset.delay = String(Math.min(index * 120, 560));
+        revealObserver.observe(item);
       });
     }
   }
 
+  /* ── Parallax hero ──────────────────────────────────────── */
   var heroBg = qs('.hero-bg');
+  var parallaxTicking = false;
+
+  function applyParallax() {
+    if (!heroBg) return;
+    if (reducedMotion || isMobile) {
+      heroBg.style.transform = 'scale(1.04) translateY(0)';
+      return;
+    }
+    var offset = Math.min(window.scrollY * 0.06, 40);
+    heroBg.style.transform = 'scale(1.04) translateY(' + offset + 'px)';
+  }
+
   if (heroBg) {
-    var ticking = false;
+    applyParallax();
     window.addEventListener('scroll', function () {
-      if (PRM || isMobile) return;
-      if (!ticking) {
-        requestAnimationFrame(function () {
-          var offset = Math.min(window.scrollY * 0.06, 40);
-          heroBg.style.transform = 'scale(1.04) translateY(' + offset + 'px)';
-          ticking = false;
-        });
-        ticking = true;
-      }
+      if (parallaxTicking) return;
+      parallaxTicking = true;
+      window.requestAnimationFrame(function () {
+        applyParallax();
+        parallaxTicking = false;
+      });
+    }, { passive: true });
+
+    window.addEventListener('resize', function () {
+      applyParallax();
     }, { passive: true });
   }
 
-  qsa('a[href^="#"]').forEach(function (a) {
-    a.addEventListener('click', function (e) {
+  /* ── Smooth scroll ──────────────────────────────────────── */
+  qsa('a[href^="#"]').forEach(function (link) {
+    link.addEventListener('click', function (event) {
       var id = this.getAttribute('href');
       if (!id || id === '#') return;
       var target = document.querySelector(id);
-      if (target) {
-        e.preventDefault();
-        var navH = nav ? nav.offsetHeight : 0;
-        var top = target.getBoundingClientRect().top + window.scrollY - navH - 20;
-        window.scrollTo({ top: top, behavior: PRM ? 'auto' : 'smooth' });
+      if (!target) return;
+      event.preventDefault();
+      var navHeight = nav ? nav.offsetHeight : 0;
+      var top = target.getBoundingClientRect().top + window.scrollY - navHeight - 20;
+      window.scrollTo({ top: top, behavior: reducedMotion ? 'auto' : 'smooth' });
+    });
+  });
+
+  /* ── FAQ accordion ──────────────────────────────────────── */
+  qsa('.faq-btn').forEach(function (button) {
+    button.addEventListener('click', function () {
+      var answer = this.nextElementSibling;
+      var isOpen = this.getAttribute('aria-expanded') === 'true';
+
+      qsa('.faq-btn').forEach(function (otherButton) {
+        otherButton.setAttribute('aria-expanded', 'false');
+        var otherAnswer = otherButton.nextElementSibling;
+        if (otherAnswer) otherAnswer.classList.remove('open');
+      });
+
+      if (!isOpen) {
+        this.setAttribute('aria-expanded', 'true');
+        if (answer) answer.classList.add('open');
       }
     });
   });
 
+  /* ── Payment portal copy actions ────────────────────────── */
+  var copyFeedback = qs('.copy-feedback');
+  var copyResetTimer = null;
+
+  function setCopyFeedback(message) {
+    if (!copyFeedback) return;
+    copyFeedback.textContent = message;
+    window.clearTimeout(copyResetTimer);
+    copyResetTimer = window.setTimeout(function () {
+      copyFeedback.textContent = '';
+    }, 2400);
+  }
+
+  qsa('.copy-trigger[data-copy]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      var value = this.getAttribute('data-copy');
+      var label = this.getAttribute('data-copy-label') || 'payment detail';
+      if (!value) return;
+
+      var onSuccess = function () {
+        button.classList.add('is-copied');
+        button.textContent = 'Copied';
+        setCopyFeedback(label.charAt(0).toUpperCase() + label.slice(1) + ' copied.');
+        window.setTimeout(function () {
+          button.classList.remove('is-copied');
+          button.textContent = button.getAttribute('data-default-label') || 'Copy';
+        }, 1800);
+      };
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(value).then(onSuccess).catch(function () {
+          setCopyFeedback('Unable to copy automatically. Please copy it manually.');
+        });
+      } else {
+        setCopyFeedback('Unable to copy automatically. Please copy it manually.');
+      }
+    });
+  });
+
+  /* ── Optional video facades ─────────────────────────────── */
+  qsa('.video-facade').forEach(function (facade) {
+    function loadVideo() {
+      var id = facade.dataset.videoid;
+      if (!id) return;
+      var iframe = document.createElement('iframe');
+      iframe.src = 'https://www.youtube.com/embed/' + id + '?autoplay=1&rel=0';
+      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+      iframe.allowFullscreen = true;
+      iframe.title = facade.getAttribute('aria-label') || 'Video';
+      iframe.style.position = 'absolute';
+      iframe.style.inset = '0';
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.border = '0';
+      facade.innerHTML = '';
+      facade.appendChild(iframe);
+      facade.classList.add('playing');
+    }
+
+    facade.addEventListener('click', loadVideo);
+    facade.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        loadVideo();
+      }
+    });
+  });
 }());
