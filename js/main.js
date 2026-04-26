@@ -150,13 +150,23 @@
     });
   }
 
+  var dropdownCloseTimer = null;
+
   if (desktopDropdown) {
     desktopDropdown.addEventListener('mouseenter', function () {
-      if (!isMobile && hoverCapable.matches) openDesktopDropdown();
+      if (!isMobile && hoverCapable.matches) {
+        window.clearTimeout(dropdownCloseTimer);
+        openDesktopDropdown();
+      }
     });
 
     desktopDropdown.addEventListener('mouseleave', function () {
-      if (!isMobile && hoverCapable.matches) closeDesktopDropdown();
+      if (!isMobile && hoverCapable.matches) {
+        window.clearTimeout(dropdownCloseTimer);
+        dropdownCloseTimer = window.setTimeout(function () {
+          closeDesktopDropdown();
+        }, 140);
+      }
     });
 
     desktopDropdown.addEventListener('focusout', function () {
