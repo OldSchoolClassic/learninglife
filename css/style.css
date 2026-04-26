@@ -9,7 +9,6 @@
    ============================================================ */
 
 /* 01 — Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400;1,700&family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;600&family=Caveat:wght@400;700&display=swap');
 
 /* 02 — Design tokens (luxury v2) */
 :root {
@@ -460,7 +459,21 @@ section[id]{scroll-margin-top:var(--nav-height)}
   overflow:hidden;isolation:isolate;
   background:var(--clr-deep);
 }
-.page-hero-bg{position:absolute;inset:0;z-index:-2;background-size:cover;background-position:center;transform:scale(1.03)}
+.page-hero-bg{position:absolute;inset:0;z-index:-2;background-size:cover;background-position:center;transform:scale(1.03);background-image:var(--page-hero-image, none)}
+
+.page-about{--page-hero-image:url('/images/hero-1920x1080.jpg')}
+.page-contact{--page-hero-image:url('/images/hero-contact-1920x500.jpg')}
+.page-evaluations{--page-hero-image:url('/images/hero-evaluations-1920x600.jpg')}
+.page-faqs{--page-hero-image:url('/images/hero-1920x1080.jpg')}
+.page-graduation{--page-hero-image:url('/images/hero-evaluations-1920x600.jpg')}
+.page-iep{--page-hero-image:url('/images/hero-evaluations-1920x600.jpg')}
+.page-resources{--page-hero-image:url('/images/hero-resources-1920x600.jpg')}
+.page-schedule{--page-hero-image:url('/images/hero-1920x1080.jpg')}
+.page-start-homeschooling{--page-hero-image:url('/images/hero-1920x1080.jpg')}
+.page-tutoring{--page-hero-image:url('/images/hero-tutoring-1920x600.jpg')}
+
+.contact-form :is(input, textarea, select):user-invalid{border-color:#b5534b;box-shadow:0 0 0 3px rgba(181,83,75,0.14)}
+.contact-form :is(input, textarea, select):focus-visible{outline:none}
 .page-hero-overlay{
   position:absolute;inset:0;z-index:-1;
   background:linear-gradient(180deg,rgba(12,39,48,0.48) 0%,rgba(12,39,48,0.82) 100%),

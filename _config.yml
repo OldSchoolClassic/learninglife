@@ -16,13 +16,10 @@ permalink: /:name/
 plugins:
   - jekyll-seo-tag
   - jekyll-sitemap
-  - jekyll-feed
 
 sitemap:
   filename: sitemap.xml
 
-feed:
-  path: feed.xml
 
 exclude:
   - Gemfile
